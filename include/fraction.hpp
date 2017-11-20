@@ -3,12 +3,15 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 
 // Fractions are always stored in a simplified state
 // denominator is always a positive number
 template <typename T>
 class Fraction {
 public:
+    const static char delimiter = '/';
+
     Fraction(T _numerator, T _denominator) :
         numerator(_numerator),
         denominator(_denominator)
@@ -27,6 +30,26 @@ public:
         numerator(f.numerator),
         denominator(f.denominator)
     {} // No need to simplify, since previous fraction must be simplified
+
+    Fraction(std::string str)
+    {
+        size_t delim_pos = str.find(delimiter);
+
+        std::stringstream num(str.substr(0, delim_pos));
+        num >> numerator;
+
+        if (delim_pos == std::string::npos) {
+            denominator = 1;
+        } else {
+            std::stringstream den(str.substr(delim_pos + 1));
+            den >> denominator;
+        }
+    }
+
+    Fraction() :
+        numerator(0),
+        denominator(1)
+    {}
 
     Fraction<T> operator+(const Fraction<T>& rhs) const
     {
@@ -116,6 +139,14 @@ public:
     template <typename U>
     friend std::ostream& operator<<(std::ostream&, const Fraction<U>& f);
 
+    void print_latex(std::ostream& os)
+    {
+        if (denominator == 1)
+            os << numerator;
+        else
+            os << "\\frac{" << numerator << "}{" << denominator << "}";
+    }
+
 private:
     T numerator;
     T denominator;
@@ -168,7 +199,7 @@ std::ostream& operator<<(std::ostream& os, const Fraction<T>& f)
     if (f.denominator == 1) {
         os << f.numerator;
     } else {
-        os << "(" << f.numerator << "/" << f.denominator << ")";
+        os << f.numerator << f.delimiter << f.denominator;
     }
 }
 
