@@ -33,6 +33,12 @@ int main(int argc,char* argv[])
 
     t.print(std::cout);
 
-    std::cout << t.choose_pivot_column() << std::endl;
-    std::cout << t.choose_pivot_row(t.choose_pivot_column()) << std::endl;
+    size_t c = t.choose_pivot_column();
+    size_t r = t.choose_pivot_row(c);
+
+    t.pivot_on(r, c);
+
+    std::cout << std::endl;
+
+    t.print(std::cout);
 }

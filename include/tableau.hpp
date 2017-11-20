@@ -71,16 +71,36 @@ public:
         // From 1 since we ignore the objective row
         for (size_t i = 1; i < m; i++) {
             T ratio = rows[i][m] / rows[i][column];
-            if (ratio > 0) {
-                if (!found_positive || ratio < smallest) {
-                    found_positive = true;
-                    smallest = ratio;
-                    pivot = i;
-                }
+            if (ratio > 0 && (!found_positive || ratio < smallest)) {
+                found_positive = true;
+                smallest = ratio;
+                pivot = i;
             }
         }
 
         return pivot;
+    }
+
+    void pivot_on(size_t row, size_t column)
+    {
+        T divisor = rows[row][column];
+        // Divide the pivot row by the pivot element
+        for (size_t i = 0; i <= n; i++) {
+            rows[row][i] /= divisor;
+        }
+
+        // For each other row, subtract the required amount using row operations
+        for (size_t i = 0; i <= m; i++) {
+            if (i == row)
+                continue;
+            T ratio = rows[i][column];
+            for (size_t j = 0; j <= n; j++) {
+                rows[i][j] -= ratio * rows[row][column];
+            }
+        }
+
+        // Update the index set
+        basic_vars[row - 1] = column + 1;
     }
 
 private:

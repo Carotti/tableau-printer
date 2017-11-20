@@ -5,6 +5,7 @@
 #include <string>
 
 // Fractions are always stored in a simplified state
+// denominator is always a positive number
 template <typename T>
 class Fraction {
 public:
@@ -19,8 +20,13 @@ public:
         numerator(_numerator),
         denominator(1)
     {
-        
+        simplify();
     }
+
+    Fraction(const Fraction<T>& f) :
+        numerator(f.numerator),
+        denominator(f.denominator)
+    {} // No need to simplify, since previous fraction must be simplified
 
     Fraction<T> operator+(const Fraction<T>& rhs) const
     {
@@ -43,11 +49,43 @@ public:
         return Fraction<T>(num, den);
     }
 
-    Fraction<T> operator/(const Fraction<T> & rhs) const
+    Fraction<T> operator/(const Fraction<T>& rhs) const
     {
         T num = numerator * rhs.denominator;
         T den = denominator * rhs.numerator;
         return Fraction<T>(num, den);
+    }
+
+    Fraction<T>& operator+=(const Fraction<T>& rhs)
+    {
+        numerator = numerator * rhs.denominator + denominator * rhs.numerator;
+        denominator = denominator * rhs.denominator;
+        simplify();
+        return *this;
+    }
+
+    Fraction<T>& operator-=(const Fraction<T>& rhs)
+    {
+        numerator = numerator * rhs.denominator - denominator * rhs.numerator;
+        denominator = denominator * rhs.denominator;
+        simplify();
+        return *this;
+    }
+
+    Fraction<T>& operator*=(const Fraction<T>& rhs)
+    {
+        numerator *= rhs.numerator;
+        denominator *= rhs.denominator;
+        simplify();
+        return *this;
+    }
+
+    Fraction<T>& operator/=(const Fraction<T>& rhs)
+    {
+        numerator *= rhs.denominator;
+        denominator *= rhs.numerator;
+        simplify();
+        return *this;
     }
 
     bool operator==(const Fraction<T>& rhs) const
@@ -83,7 +121,8 @@ private:
     T denominator;
 
     // Returns the greatest common denominator of a and b
-    T gcd(const T& a, const T& b) {
+    T gcd(const T& a, const T& b) const
+    {
         if (a == b)
             return a;
 
@@ -99,8 +138,22 @@ private:
             return gcd(b % a, a);
     }
 
+    T absolute(T& x) const
+    {
+        if (x < 0) {
+            return -x;
+        } else {
+            return x;
+        }
+    }
+
     void simplify() {
-        T divisor = gcd(numerator, denominator);
+        if (denominator < 0) {
+            numerator *= -1;
+            denominator *= -1;
+        }
+
+        T divisor = gcd(absolute(numerator), denominator);
         numerator /= divisor;
         denominator /= divisor;
 
@@ -115,7 +168,7 @@ std::ostream& operator<<(std::ostream& os, const Fraction<T>& f)
     if (f.denominator == 1) {
         os << f.numerator;
     } else {
-        os << f.numerator << "/" << f.denominator;
+        os << "(" << f.numerator << "/" << f.denominator << ")";
     }
 }
 
