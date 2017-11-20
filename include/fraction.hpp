@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 
+// Fractions are always stored in a simplified state
 template <typename T>
 class Fraction {
 public:
@@ -12,6 +13,13 @@ public:
         denominator(_denominator)
     {
         simplify(); // Always simplify fractions on construction
+    }
+
+    Fraction(T _numerator) :
+        numerator(_numerator),
+        denominator(1)
+    {
+        
     }
 
     Fraction<T> operator+(const Fraction<T>& rhs) const
@@ -42,6 +50,31 @@ public:
         return Fraction<T>(num, den);
     }
 
+    bool operator==(const Fraction<T>& rhs) const
+    {
+        return numerator == rhs.numerator && denominator == rhs.denominator;
+    }
+
+    bool operator<(const Fraction<T>& rhs) const
+    {
+        return (numerator * rhs.denominator) < (denominator * rhs.numerator);
+    }
+
+    bool operator>(const Fraction<T>& rhs) const
+    {
+        return (numerator * rhs.denominator) > (denominator * rhs.numerator);
+    }
+
+    bool operator<=(const Fraction<T>& rhs) const
+    {
+        return (numerator * rhs.denominator) <= (denominator * rhs.numerator);
+    }
+
+    bool operator>=(const Fraction<T>& rhs) const
+    {
+        return (numerator * rhs.denominator) >= (denominator * rhs.numerator);
+    }
+
     template <typename U>
     friend std::ostream& operator<<(std::ostream&, const Fraction<U>& f);
 
@@ -70,6 +103,9 @@ private:
         T divisor = gcd(numerator, denominator);
         numerator /= divisor;
         denominator /= divisor;
+
+        if (numerator == 0)
+            denominator = 1;
     };
 };
 

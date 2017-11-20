@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <fstream>
 
-#include "matrix.hpp"
+#include "tableau.hpp"
 #include "fraction.hpp"
 
 int main(int argc,char* argv[])
@@ -22,10 +22,17 @@ int main(int argc,char* argv[])
 
     file.close();
 
-    square_elements<Fraction<int>, 2> el = {{
-        {Fraction<int>(1, 2), Fraction<int>(1, 3)},
-        {Fraction<int>(1, 4), Fraction<int>(1, 5)}
-    }};
+    Tableau<Fraction<int>, 2, 4> t(
+        {3, 4},
+        {{
+            {Fraction<int>(5, 1), Fraction<int>(10, 1), Fraction<int>(0, 1), Fraction<int>(0, 1), Fraction<int>(0, 1)},
+            {Fraction<int>(1, 1), Fraction<int>(3, 2), Fraction<int>(1, 1), Fraction<int>(0, 1), Fraction<int>(2, 1)},
+            {Fraction<int>(4, 1), Fraction<int>(2, 1), Fraction<int>(0, 1), Fraction<int>(1, 1), Fraction<int>(2, 1)}
+        }}
+    );
 
+    t.print(std::cout);
 
+    std::cout << t.choose_pivot_column() << std::endl;
+    std::cout << t.choose_pivot_row(t.choose_pivot_column()) << std::endl;
 }
