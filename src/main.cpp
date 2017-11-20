@@ -22,10 +22,10 @@ int main(int argc,char* argv[])
 
     file.close();
 
-    Fraction<int> a(5, 3);
-    Fraction<int> b(10, 3);
+    square_elements<Fraction<int>, 2> el = {{
+        {Fraction<int>(1, 2), Fraction<int>(1, 3)},
+        {Fraction<int>(1, 4), Fraction<int>(1, 5)}
+    }};
 
-    Fraction<int> result = a + b;
 
-    std::cout << result << std::endl;
 }

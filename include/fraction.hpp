@@ -14,28 +14,28 @@ public:
         simplify(); // Always simplify fractions on construction
     }
 
-    Fraction<T> operator+(const Fraction<T>& rhs)
+    Fraction<T> operator+(const Fraction<T>& rhs) const
     {
         T num = numerator * rhs.denominator + denominator * rhs.numerator;
         T den = denominator * rhs.denominator;
         return Fraction<T>(num, den);
     }
 
-    Fraction<T> operator-(const Fraction<T>& rhs)
+    Fraction<T> operator-(const Fraction<T>& rhs) const
     {
         T num = numerator * rhs.denominator - denominator * rhs.numerator;
         T den = denominator * rhs.denominator;
         return Fraction<T>(num, den);
     }
 
-    Fraction<T> operator*(const Fraction<T>& rhs)
+    Fraction<T> operator*(const Fraction<T>& rhs) const
     {
         T num = numerator * rhs.numerator;
         T den = denominator * rhs.denominator;
         return Fraction<T>(num, den);
     }
 
-    Fraction<T> operator/(const Fraction<T> & rhs)
+    Fraction<T> operator/(const Fraction<T> & rhs) const
     {
         T num = numerator * rhs.denominator;
         T den = denominator * rhs.numerator;
