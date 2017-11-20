@@ -16,6 +16,6 @@ Make sure to `\usepackage{amsmath}`
 
 # Notes
 
-Current main.cpp is just hacked together, feel free to use tableau.hpp independantly...
+Current main.cpp is just hacked together, feel free to use tableau.hpp independently...
 
 Also note that with Tableau<Fraction<int>>, most *real* problems won't be solvable, since the ints in Fraction will overflow. However, for pretty-printing nice example tableaus, this works nicely. For the latter, consider Tableau<Double> but be wary of rounding errors..
