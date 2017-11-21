@@ -153,8 +153,9 @@ public:
             if (i == row)
                 continue;
             T ratio = rows[i][column];
+            std::cerr << ratio << std::endl;
             for (unsigned j = 0; j <= n; j++) {
-                rows[i][j] -= ratio * rows[row][column];
+                rows[i][j] -= ratio * rows[row][j];
             }
         }
 
