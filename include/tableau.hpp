@@ -128,7 +128,7 @@ public:
         unsigned pivot = 0;
 
         // From 1 since we ignore the objective row
-        for (unsigned i = 1; i < m; i++) {
+        for (unsigned i = 1; i <= m; i++) {
             T ratio = rows[i][n] / rows[i][column];
             if (ratio > 0 && (!found_positive || ratio < smallest)) {
                 found_positive = true;
