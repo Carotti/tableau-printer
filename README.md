@@ -18,4 +18,6 @@ Make sure to `\usepackage{amsmath}`
 
 Current main.cpp is just hacked together, feel free to use tableau.hpp independently...
 
-Also note that with Tableau<Fraction<int>>, most *real* problems won't be solvable, since the ints in Fraction will overflow. However, for pretty-printing nice example tableaus, this works nicely. For the latter, consider Tableau<Double> but be wary of rounding errors..
+Also note that with `Tableau<Fraction<int>>`, most *real* problems won't be solvable, since the ints in Fraction will overflow. However, for pretty-printing nice example tableaus, this works nicely. For the latter, consider `Tableau<Double>` but be wary of rounding errors..
+
+Choosing a pivot column/row are 0 base indexed from the value rows/columns (ignore the labelled ones). Obviously you can't pivot on a value in the objective row. Enter 0 as the pivot row to stop pivoting.
