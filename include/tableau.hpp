@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
 #include <string>
 #include <exception>
 
@@ -27,14 +28,6 @@ private:
     const char* msg;
 };
 
-class NoRow : public TableauException {
-public:
-    virtual const char* what() const throw()
-    {
-        return "No row found for a specified variable";
-    }
-};
-
 // m rows of the simplex tableau, n variables
 template <typename T>
 class Tableau {
@@ -53,20 +46,20 @@ public:
     void print(std::ostream& os) const
     {
         print_first_row(os);
-        print_rows(os, objective_rows, objective_vars);
-        print_rows(os, basic_rows, basic_vars);
+        print_rows(os, objective_rows);
+        print_rows(os, basic_rows);
     }
 
     // Returns wheter or not var is a basic variable
     bool is_basic(const std::string& var)
     {
-        return variable_is(var, basic_vars);
+        return false;
     }
 
     // Returns whether or not var is a regular variable
     bool is_regular(const std::string& var) const
     {
-        return variable_is(var, regular_vars);
+        return false;
     }
 
     void choose_pivot_column(const std::string& objective_var) const
@@ -82,15 +75,17 @@ private:
     constexpr const static char* first_end = "RHS";
 
     using SimplexVars = std::vector<std::string>;
-    using SimplexRows = std::vector<std::vector<T>>;
+
+    using SimplexRow = std::map<std::string, T>;
+    using SimplexRows = std::map<std::string, SimplexRow>;
 
     SimplexVars regular_vars;
 
-    SimplexVars basic_vars; // Each basic_var has a basic_row
-    SimplexVars objective_vars; // Each objective_var has an objective_row
-
     SimplexRows basic_rows;
     SimplexRows objective_rows;
+
+    // All of the right hand side values in the tableau
+    SimplexRow rhs;
 
     void read_first_row(std::istream& is)
     {
@@ -119,19 +114,13 @@ private:
             return;
 
         // Objective variables didn't appear in the first row
-        if (is_regular(tmp)) {
-            basic_vars.push_back(tmp);
-            read_elements(is, false);
-        } else {
-            objective_vars.push_back(tmp);
-            read_elements(is, true);
-        }
+        read_elements(is, tmp, is_regular(tmp));
     }
 
-    void read_elements(std::istream& is, bool objective)
+    void read_elements(std::istream& is, std::string var, bool regular)
     {
         T tmp;
-        std::vector<T> row;
+        SimplexRow row;
 
         for (unsigned i = 0; i <= regular_vars.size(); i++) {
             is >> tmp;
@@ -139,13 +128,18 @@ private:
             if (!is)
                 throw InvalidInput("Not enough values in rows");
 
-            row.push_back(tmp);
+            // Last value is the right hand side
+            if (i == regular_vars.size()) {
+                rhs[var] = tmp;
+            } else {
+                row[regular_vars[i]] = tmp;
+            }
         }
 
-        if (objective) {
-            objective_rows.push_back(row);
+        if (regular) {
+            basic_rows[var] = row;
         } else {
-            basic_rows.push_back(row);
+            objective_rows[var] = row;
         }
     }
 
@@ -158,37 +152,17 @@ private:
         os << first_end << std::endl;
     }
 
-    void print_rows(std::ostream& os, const SimplexRows& rows,
-        const SimplexVars& vars) const
+    void print_rows(std::ostream& os, const SimplexRows& rows) const
     {
-        for (unsigned i = 0; i < rows.size(); i++) {
-            os << vars[i];
-            for (const T& element : rows[i]) {
-                os << delimiter << element;
+        using RowsIterator = typename SimplexRows::const_iterator;
+        for (RowsIterator it = rows.begin(); it != rows.end(); ++it) {
+            os << it->first;
+            for (const std::string& var : regular_vars) {
+                os << delimiter << (it->second).find(var)->second;
             }
+            os << delimiter << rhs.find(it->first)->second;
             os << std::endl;
         }
-    }
-
-    bool variable_is(const std::string& var, const SimplexVars& vars) const
-    {
-        try {
-            row_index_of(var, vars);
-        } catch (NoRow& e)  {
-            return false;
-        }
-
-        return true;
-    }
-
-    // Returns the index of the row which corresponds to var
-    unsigned row_index_of(const std::string& var, const SimplexVars& vars) const
-    {
-        for (unsigned i = 0; i < vars.size(); i++) {
-            if (vars[i] == var)
-                return i;
-        }
-        throw NoRow();
     }
 };
 
