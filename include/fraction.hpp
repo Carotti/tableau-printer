@@ -6,12 +6,9 @@
 #include <sstream>
 
 // Fractions are always stored in a simplified state
-// denominator is always a positive number
 template <typename T>
 class Fraction {
 public:
-    const static char delimiter = '/';
-
     Fraction(T _numerator, T _denominator) :
         numerator(_numerator),
         denominator(_denominator)
@@ -31,21 +28,7 @@ public:
         denominator(f.denominator)
     {} // No need to simplify, since previous fraction must be simplified
 
-    Fraction(std::string str)
-    {
-        size_t delim_pos = str.find(delimiter);
-
-        std::stringstream num(str.substr(0, delim_pos));
-        num >> numerator;
-
-        if (delim_pos == std::string::npos) {
-            denominator = 1;
-        } else {
-            std::stringstream den(str.substr(delim_pos + 1));
-            den >> denominator;
-        }
-    }
-
+    // Default fraction is 0/1
     Fraction() :
         numerator(0),
         denominator(1)
@@ -139,15 +122,41 @@ public:
     template <typename U>
     friend std::ostream& operator<<(std::ostream&, const Fraction<U>& f);
 
+    template <typename U>
+    friend std::istream& operator>>(std::istream& is, Fraction<U>& f);
+
+    void print(std::ostream& os) const
+    {
+        if (denominator == 0) {
+            os << infinity;
+        } else if (denominator == 1) {
+            os << numerator;
+        } else {
+            os << numerator << delimiter << denominator;
+        }
+    }
+
+    bool is_infinity()
+    {
+        return denominator == 0;
+    }
+
     void print_latex(std::ostream& os)
     {
-        if (denominator == 1)
+        if (denominator == 0) {
+            os << "\\infty";
+        } else if (denominator == 1) {
             os << numerator;
-        else
+        } else {
             os << "\\frac{" << numerator << "}{" << denominator << "}";
+        }
     }
 
 private:
+
+    const static char delimiter = '/';
+    constexpr const static char* infinity = "inf";
+
     T numerator;
     T denominator;
 
@@ -163,10 +172,11 @@ private:
         if (b == 0)
             return a;
 
-        if (a > b)
+        if (a > b) {
             return gcd(a % b, b);
-        else
+        } else {
             return gcd(b % a, a);
+        }
     }
 
     T absolute(T& x) const
@@ -179,9 +189,10 @@ private:
     }
 
     void simplify() {
+        // denominator is always a non-negative number
         if (denominator < 0) {
-            numerator *= -1;
-            denominator *= -1;
+            numerator = -numerator;
+            denominator = -denominator;
         }
 
         T divisor = gcd(absolute(numerator), denominator);
@@ -196,11 +207,30 @@ private:
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const Fraction<T>& f)
 {
-    if (f.denominator == 1) {
-        os << f.numerator;
-    } else {
-        os << f.numerator << f.delimiter << f.denominator;
-    }
+    f.print(os);
+    return os;
 }
+
+template <typename T>
+std::istream& operator>>(std::istream& is, Fraction<T>& f)
+{
+    std::string input;
+    is >> input;
+    size_t delim_pos = input.find(f.delimiter);
+
+    std::stringstream num(input.substr(0, delim_pos));
+    num >> f.numerator;
+
+    if (delim_pos == std::string::npos) {
+        // No delimiter was found, not a fractional number
+        f.denominator = 1;
+    } else {
+        std::stringstream den(input.substr(delim_pos + 1));
+        den >> f.denominator;
+    }
+
+    return is;
+}
+
 
 #endif
