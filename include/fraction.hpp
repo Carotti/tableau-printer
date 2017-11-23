@@ -160,7 +160,7 @@ private:
     T numerator;
     T denominator;
 
-    // Returns the greatest common denominator of a and b
+    // Returns the greatest common divisor of a and b
     T gcd(const T& a, const T& b) const
     {
         if (a == b)

@@ -28,6 +28,22 @@ private:
     const char* msg;
 };
 
+class InvalidVariable : public TableauException {
+public:
+    InvalidVariable(const char* _msg) : msg(_msg)
+    {}
+
+    virtual const char* what() const throw()
+    {
+        std::string error("Invalid variable use: ");
+        error += std::string(msg);
+        return error.c_str();
+    }
+
+private:
+    const char* msg;
+};
+
 // m rows of the simplex tableau, n variables
 template <typename T>
 class Tableau {
@@ -50,7 +66,7 @@ public:
         print_rows(os, basic_rows);
     }
 
-    bool is_basic(const std::string& var)
+    bool is_basic(const std::string& var) const
     {
         return basic_rows.find(var) != basic_rows.end();
     }
@@ -67,8 +83,7 @@ public:
     }
 
     // Choose the best pivot column based on the specified objective variable
-    // Returns an empty string if no column can be chosen or the specified
-    // variable is not an objective variable
+    // Returns an empty string if no column can be chosen
     std::string choose_pivot_column(const std::string& objective_var) const
     {
         T largest = 0;
@@ -76,7 +91,7 @@ public:
 
         auto row = objective_rows.find(objective_var);
         if (row == objective_rows.end()) // Variable was not objective
-            return pivot;
+            throw InvalidVariable("variable is not objective");
 
         for (auto it = row->second.begin(); it != row->second.end(); ++it) {
             if (it->second > largest) {
@@ -89,7 +104,28 @@ public:
     }
 
     // Choose the best pivot row based on the specified regular variable
+    // Returns an empty string of no row can be chosen
     std::string choose_pivot_row(const std::string& regular_var) const
+    {
+        // Set the smallest value to the ratio of the first basic row
+        T smallest = get_ratio(basic_rows.begin()->first, regular_var);
+        std::string pivot = "";
+
+        if (!is_regular(regular_var))
+            throw InvalidVariable("variable is not regular");
+
+        for (auto it = basic_rows.begin(); it != basic_rows.end(); ++it) {
+            T ratio = get_ratio(it->first, regular_var);
+            if (ratio < smallest && ratio > 0) {
+                smallest = ratio;
+                pivot = it->first;
+            }
+        }
+
+        return pivot;
+    }
+
+    void pivot_on(const std::string& basic, const std::string& regular)
     {
         
     }
@@ -144,7 +180,7 @@ private:
         read_elements(is, tmp, is_regular(tmp));
     }
 
-    void read_elements(std::istream& is, std::string var, bool regular)
+    void read_elements(std::istream& is, const std::string& var, bool regular)
     {
         T tmp;
         SimplexRow row;
@@ -189,6 +225,17 @@ private:
             os << delimiter << rhs.find(it->first)->second;
             os << std::endl;
         }
+    }
+
+    T get_ratio(const std::string& basic, const std::string& regular) const
+    {
+        if (!is_basic(basic))
+            throw InvalidVariable("variable is not basic");
+
+        if (!is_regular(regular))
+            throw InvalidVariable("variable is not regular");
+
+        return rhs.at(basic) / basic_rows.at(basic).at(regular);
     }
 };
 
