@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <sstream>
 #include <exception>
 
 class TableauException : public std::exception {
@@ -62,8 +63,8 @@ public:
     void print(std::ostream& os) const
     {
         print_first_row(os);
-        print_rows(os, objective_rows);
-        print_rows(os, basic_rows);
+        print_rows(os, objective_rows, objective_vars);
+        print_rows(os, basic_rows, basic_vars);
     }
 
     bool is_basic(const std::string& var) const
@@ -80,6 +81,12 @@ public:
                 return true;
         }
         return false;
+    }
+
+    // If no objective variable is specified, just use the first one
+    std::string choose_pivot_column() const
+    {
+        return choose_pivot_column(objective_vars.front());
     }
 
     // Choose the best pivot column based on the specified objective variable
@@ -127,7 +134,55 @@ public:
 
     void pivot_on(const std::string& basic, const std::string& regular)
     {
-        
+        T ratio = basic_rows[basic][regular];
+        auto& row = basic_rows[basic];
+        for (auto it = row.begin(); it != row.end(); ++it) {
+            basic_rows[regular][it->first] = it->second / ratio;
+        }
+        rhs[regular] = rhs[basic] / ratio;
+
+        // Replace the old basic variable in the set of basic variables
+        for (std::string& bv : basic_vars) {
+            if (bv == basic) {
+                bv = regular;
+                break;
+            }
+        }
+
+        // Remove the old rows from the map
+        basic_rows.erase(basic);
+        rhs.erase(basic);
+
+        for (const std::string& bv : basic_vars) {
+            T factor = basic_rows[bv][regular] * -1;
+            if (bv != regular)
+                row_operation(bv, regular, factor);
+        }
+
+        for (const std::string& ov : objective_vars) {
+            T factor = objective_rows[ov][regular] * -1;
+            row_operation(ov, regular, factor);
+        }
+    }
+
+    bool is_optimal(const std::string& objective_var) const
+    {
+        for (const std::string& rv : regular_vars) {
+            if (objective_rows.find(objective_var)->second.find(rv)->second > 0)
+                return false;
+        }
+        return true;
+    }
+
+    bool is_optimal() const
+    {
+        return is_optimal(objective_vars.front());
+    }
+
+    void row_operation(const std::string& l, const std::string& r, const T& f)
+    {
+        rhs[l] += rhs[r] * f;
+        add_row(row_from_var(l), row_from_var(r), f);
     }
 
 private:
@@ -143,6 +198,8 @@ private:
     using SimplexRows = std::map<std::string, SimplexRow>;
 
     SimplexVars regular_vars;
+    SimplexVars basic_vars;
+    SimplexVars objective_vars;
 
     SimplexRows basic_rows;
     SimplexRows objective_rows;
@@ -201,8 +258,10 @@ private:
 
         if (regular) {
             basic_rows[var] = row;
+            basic_vars.push_back(var);
         } else {
             objective_rows[var] = row;
+            objective_vars.push_back(var);
         }
     }
 
@@ -215,15 +274,15 @@ private:
         os << first_end << std::endl;
     }
 
-    void print_rows(std::ostream& os, const SimplexRows& rows) const
+    void print_rows(std::ostream& os, const SimplexRows& rows,
+        const SimplexVars& vars) const
     {
-        for (auto it = rows.begin(); it != rows.end(); ++it) {
-            os << it->first;
-            for (const std::string& var : regular_vars) {
-                os << delimiter << (it->second).find(var)->second;
+        for (const auto& bv: vars) {
+            os << bv << delimiter;
+            for (const auto& rv : regular_vars) {
+                os << rows.at(bv).at(rv) << delimiter;
             }
-            os << delimiter << rhs.find(it->first)->second;
-            os << std::endl;
+            os << rhs.at(bv) << std::endl;
         }
     }
 
@@ -236,6 +295,18 @@ private:
             throw InvalidVariable("variable is not regular");
 
         return rhs.at(basic) / basic_rows.at(basic).at(regular);
+    }
+
+    void add_row(SimplexRow& l, SimplexRow& r, const T& f)
+    {
+        for (const std::string& rv : regular_vars) {
+            l[rv] += r[rv] * f;
+        }
+    }
+
+    SimplexRow& row_from_var(const std::string& var)
+    {
+        return is_basic(var) ? basic_rows[var] : objective_rows[var];
     }
 };
 
