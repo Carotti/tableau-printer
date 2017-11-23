@@ -196,8 +196,12 @@ private:
         }
 
         T divisor = gcd(absolute(numerator), denominator);
-        numerator /= divisor;
-        denominator /= divisor;
+
+        // This allows for dividing by 0
+        if (divisor != 0) {
+            numerator /= divisor;
+            denominator /= divisor;
+        }
 
         if (numerator == 0)
             denominator = 1;
