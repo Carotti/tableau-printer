@@ -50,21 +50,48 @@ public:
         print_rows(os, basic_rows);
     }
 
-    // Returns wheter or not var is a basic variable
     bool is_basic(const std::string& var)
     {
-        return false;
+        return basic_rows.find(var) != basic_rows.end();
     }
 
-    // Returns whether or not var is a regular variable
+    // regular variables are non-objective variables
+    // objective variables are non-regular variables
     bool is_regular(const std::string& var) const
     {
+        for (const std::string& regular_var : regular_vars) {
+            if (var == regular_var)
+                return true;
+        }
         return false;
     }
 
-    void choose_pivot_column(const std::string& objective_var) const
+    // Choose the best pivot column based on the specified objective variable
+    // Returns an empty string if no column can be chosen or the specified
+    // variable is not an objective variable
+    std::string choose_pivot_column(const std::string& objective_var) const
     {
+        T largest = 0;
+        std::string pivot = "";
 
+        auto row = objective_rows.find(objective_var);
+        if (row == objective_rows.end()) // Variable was not objective
+            return pivot;
+
+        for (auto it = row->second.begin(); it != row->second.end(); ++it) {
+            if (it->second > largest) {
+                largest = it->second;
+                pivot = it->first;
+            }
+        }
+
+        return pivot;
+    }
+
+    // Choose the best pivot row based on the specified regular variable
+    std::string choose_pivot_row(const std::string& regular_var) const
+    {
+        
     }
 
 private:
@@ -154,8 +181,7 @@ private:
 
     void print_rows(std::ostream& os, const SimplexRows& rows) const
     {
-        using RowsIterator = typename SimplexRows::const_iterator;
-        for (RowsIterator it = rows.begin(); it != rows.end(); ++it) {
+        for (auto it = rows.begin(); it != rows.end(); ++it) {
             os << it->first;
             for (const std::string& var : regular_vars) {
                 os << delimiter << (it->second).find(var)->second;
