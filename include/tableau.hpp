@@ -45,7 +45,6 @@ public:
         read_first_row(is);
         while(is)
             read_row(is);
-
     }
 
     template <typename U>
@@ -64,10 +63,10 @@ public:
         return variable_is(var, basic_vars);
     }
 
-    // Returns whether or not var is an objective variable
-    bool is_objective(const std::string& var) const
+    // Returns whether or not var is a regular variable
+    bool is_regular(const std::string& var) const
     {
-        return variable_is(var, objective_vars);
+        return variable_is(var, regular_vars);
     }
 
     void choose_pivot_column(const std::string& objective_var) const
@@ -78,8 +77,6 @@ public:
 private:
 
     const static char delimiter = '\t';
-
-    const static char objective_symbol = '*';
 
     constexpr const static char* first_start = "BVs";
     constexpr const static char* first_end = "RHS";
@@ -121,14 +118,13 @@ private:
         if (tmp.empty())
             return;
 
-        // Objective variables end with a special character
-        if (tmp.back() == objective_symbol) {
-            tmp.pop_back();
-            objective_vars.push_back(tmp);
-            read_elements(is, true);
-        } else {
+        // Objective variables didn't appear in the first row
+        if (is_regular(tmp)) {
             basic_vars.push_back(tmp);
             read_elements(is, false);
+        } else {
+            objective_vars.push_back(tmp);
+            read_elements(is, true);
         }
     }
 
