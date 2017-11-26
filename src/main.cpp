@@ -87,7 +87,7 @@ void add_basic_variable(SimplexTableau& t)
     std::cin >> rhs;
 
     t.add_basic_row(new_basic, row, rhs);
-    std::cerr << std::endl << t << std::endl;
+    std::cout << std::endl << t << std::endl;
     t.basic_row_ops(new_basic);
 }
 
