@@ -50,6 +50,11 @@ template <typename T>
 class Tableau {
 public:
 
+    using SimplexVars = std::vector<std::string>;
+
+    using SimplexRow = std::map<std::string, T>;
+    using SimplexRows = std::map<std::string, SimplexRow>;
+
     Tableau(std::istream& is)
     {
         read_first_row(is);
@@ -83,6 +88,20 @@ public:
         return false;
     }
 
+    bool is_objective(const std::string& var) const
+    {
+        for (const std::string& obj_var : objective_vars) {
+            if (var == obj_var)
+                return true;
+        }
+        return false;
+    }
+
+    unsigned num_regular_vars() const
+    {
+        return regular_vars.size();
+    }
+
     // If no objective variable is specified, just use the first one
     std::string choose_pivot_column() const
     {
@@ -114,32 +133,52 @@ public:
     // Returns an empty string of no row can be chosen
     std::string choose_pivot_row(const std::string& regular_var) const
     {
-        // Set the smallest value to the ratio of the first basic row
-        T smallest = get_ratio(basic_rows.begin()->first, regular_var);
-        std::string pivot = "";
-
         if (!is_regular(regular_var))
             throw InvalidVariable("variable is not regular");
 
-        for (auto it = basic_rows.begin(); it != basic_rows.end(); ++it) {
-            T ratio = get_ratio(it->first, regular_var);
-            if (ratio < smallest && ratio > 0) {
+        // Set the smallest value to the ratio of the first basic row
+        T smallest = 0;
+        std::string pivot = "";
+        bool found = false;
+
+        for (const std::string bv : basic_vars) {
+            T ratio = get_ratio(bv, regular_var);
+            if ((ratio < smallest || !found) && ratio > 0) {
+                found = true;
                 smallest = ratio;
-                pivot = it->first;
+                pivot = bv;
             }
         }
 
         return pivot;
     }
 
+    void basic_row_ops(const std::string& regular)
+    {
+        T ratio = basic_rows[regular][regular];
+
+        for (const std::string& rv : regular_vars) {
+            basic_rows[regular][rv] /= ratio;
+        }
+        rhs[regular] /= ratio;
+
+        for (const std::string& bv : basic_vars) {
+            T factor = basic_rows[bv][regular] * -1;
+            if (bv != regular)
+                row_operation(bv, regular, factor);
+        }
+
+        for (const std::string& ov : objective_vars) {
+            T factor = objective_rows[ov][regular] * -1;
+            row_operation(ov, regular, factor);
+        }
+    }
+
     void pivot_on(const std::string& basic, const std::string& regular)
     {
-        T ratio = basic_rows[basic][regular];
-        auto& row = basic_rows[basic];
-        for (auto it = row.begin(); it != row.end(); ++it) {
-            basic_rows[regular][it->first] = it->second / ratio;
-        }
-        rhs[regular] = rhs[basic] / ratio;
+        // Add the regular variable to the basis
+        basic_rows[regular] = basic_rows[basic];
+        rhs[regular] = rhs[basic];
 
         // Replace the old basic variable in the set of basic variables
         for (std::string& bv : basic_vars) {
@@ -153,16 +192,7 @@ public:
         basic_rows.erase(basic);
         rhs.erase(basic);
 
-        for (const std::string& bv : basic_vars) {
-            T factor = basic_rows[bv][regular] * -1;
-            if (bv != regular)
-                row_operation(bv, regular, factor);
-        }
-
-        for (const std::string& ov : objective_vars) {
-            T factor = objective_rows[ov][regular] * -1;
-            row_operation(ov, regular, factor);
-        }
+        basic_row_ops(regular);
     }
 
     bool is_optimal(const std::string& objective_var) const
@@ -185,17 +215,24 @@ public:
         add_row(row_from_var(l), row_from_var(r), f);
     }
 
+    void add_basic_row(const std::string& bv, SimplexRow& new_row, const T& r)
+    {
+        basic_vars.push_back(bv);
+        basic_rows[bv] = new_row;
+        rhs[bv] = r;
+    }
+
+    const SimplexVars& get_regular_vars() const
+    {
+        return regular_vars;
+    }
+
 private:
 
     const static char delimiter = '\t';
 
     constexpr const static char* first_start = "BVs";
     constexpr const static char* first_end = "RHS";
-
-    using SimplexVars = std::vector<std::string>;
-
-    using SimplexRow = std::map<std::string, T>;
-    using SimplexRows = std::map<std::string, SimplexRow>;
 
     SimplexVars regular_vars;
     SimplexVars basic_vars;

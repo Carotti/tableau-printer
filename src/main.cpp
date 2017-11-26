@@ -4,14 +4,15 @@
 #include "tableau.hpp"
 #include "fraction.hpp"
 
-using SimplexTableau = Tableau<Fraction<int>>;
+using Element = Fraction<int>;
+using SimplexTableau = Tableau<Element>;
 
 void pivot(SimplexTableau& t)
 {
     std::cerr << "Enter a variable to enter the basis ";
     std::string suggestion = t.choose_pivot_column();
     if (suggestion != "")
-        std::cerr << "(suggested: " << t.choose_pivot_column() << "): ";
+        std::cerr << "(suggested: " << t.choose_pivot_column() << ") ";
     std::string regular;
     std::cin >> regular;
 
@@ -57,7 +58,37 @@ void add_variable(SimplexTableau& t)
 
 void add_basic_variable(SimplexTableau& t)
 {
+    std::cerr << "Enter the variable you want to add to the basis ";
+    std::string new_basic;
+    std::cin >> new_basic;
 
+    if (t.is_basic(new_basic)) {
+        std::cerr << new_basic << " is already a basic variable" << std::endl;
+        std::cerr << "Pivot " << new_basic << "out then try again" << std::endl;
+        return;
+    }
+
+    if (!t.is_regular(new_basic)) {
+        std::cerr << new_basic << " is not a variable" << std::endl;
+        std::cerr << "Try adding it as a variable then try agani" << std::endl;
+    }
+
+    std::cerr << "Enter the values for each column in the row" << std::endl;
+    SimplexTableau::SimplexRow row;
+    for (const std::string& rv : t.get_regular_vars()) {
+        Element el;
+        std::cerr << rv << ": ";
+        std::cin >> el;
+        row[rv] = el;
+    }
+
+    Element rhs;
+    std::cerr << "RHS: ";
+    std::cin >> rhs;
+
+    t.add_basic_row(new_basic, row, rhs);
+    std::cerr << std::endl << t << std::endl;
+    t.basic_row_ops(new_basic);
 }
 
 void add_objective_variable(SimplexTableau& t)
@@ -166,7 +197,9 @@ int main(int argc, char* argv[])
         SimplexTableau t(file);
 
         do {
+            std::cout << std::endl << t << std::endl;
             std::cerr << std::endl << t << std::endl;
+
             if (t.is_optimal()) {
                 std::cerr << "Tableau is optimal" << std::endl;
             }
