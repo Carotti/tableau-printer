@@ -10,9 +10,6 @@ Run the program with
 
 where m is the number of non-objective rows in the tableau in input.txt and n is the number of variables.
 
-# Latex Output
-
-Make sure to `\usepackage{amsmath}`
 
 # Notes
 
@@ -21,4 +18,4 @@ Also note that with `Tableau<Fraction<int>>`, most *real* problems won't be solv
 Some of the features listed in the menu aren't yet implemented. Implementations and suggestions for more features are welcome.
 
 I've moved the LaTeX making code into a bash script `latexify.sh`. Simply save the output of the program into a file and then rnu
-`cat output.txt | ./latexify.sh` to get LaTeX output.
+`cat output.txt | ./latexify.sh` to get LaTeX output. Make sure to`\usepackage{amsmath}`.
