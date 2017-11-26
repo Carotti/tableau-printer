@@ -6,7 +6,7 @@ Input file format is as in `input.txt`, variables should be written along the fi
 
 Run the program with
 
-```tableau-printer input.txt``
+```tableau-printer input.txt```
 
 where m is the number of non-objective rows in the tableau in input.txt and n is the number of variables.
 
